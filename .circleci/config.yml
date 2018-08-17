@@ -1,0 +1,59 @@
+version: 2
+jobs:
+  deploy_dev:
+    docker:
+      - image: circleci/node:6
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name:  Create environment file
+          command: env > .env
+      - run:
+          name: Create Dependencies
+          command: |
+              sudo apt install python-yaml
+              sudo npm install -g serverless
+              npm install
+      - run:
+          name: Deploy
+          command: |
+              export ENV=dev && python setenv
+              cd src && serverless deploy
+  deploy_prod:
+    docker:
+      - image: circleci/node:6
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name:  Create environment file
+          command: env > .env
+      - run:
+          name: Create Dependencies
+          command: |
+              sudo apt install python-yaml
+              sudo npm install -g serverless
+              npm install
+      - run:
+          name: Deploy
+          command: |
+              export ENV=prod && python setenv
+              cd src && serverless deploy
+
+workflows:
+  version: 2
+  deploy_dev:
+    jobs:
+      - deploy_dev:
+          filters:
+            branches:
+              only: develop
+  deploy_prod:
+    jobs:
+      - deploy_prod:
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v[0-9]+(\.[0-9]+)+/
